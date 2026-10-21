@@ -1,0 +1,9 @@
+.env*
+data/
+node_modules/
+.vercel/
+.next/
+supabase/.temp/
+supabase/.branches/
+*.xlsx
+__pycache__/
