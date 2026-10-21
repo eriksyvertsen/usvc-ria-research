@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireUser } from "@/lib/auth";
 import { getFirm } from "@/lib/db";
 import { TIER_COLOR, money, pct, site } from "../../format";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 120;
 
 type F = Record<string, any>;
 
@@ -14,7 +13,6 @@ function Row({ k, v }: { k: string; v: React.ReactNode }) {
 }
 
 export default async function FirmPage({ params }: { params: Promise<{ crd: string }> }) {
-  await requireUser();
   const { crd } = await params;
   const f = (await getFirm(Number(crd))) as F | null;
   if (!f) notFound();

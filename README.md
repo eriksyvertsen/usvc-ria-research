@@ -21,7 +21,7 @@ The Supabase project `usvc-ria-research` (AngelList Asset Management org). The s
 
 ## Dashboard
 
-`web/` is a Next.js app deployed on Vercel with Deployment Protection. It needs `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` set as server env vars.
+`web/` is a Next.js app deployed on Vercel. It is public: anyone with the URL can view it. The database is still only readable server-side. It needs `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` set as server env vars.
 
 ```bash
 cd web && npm install && npm run dev
