@@ -76,6 +76,8 @@ export default async function FirmPage({ params }: { params: Promise<{ crd: stri
             <Row k="Private-markets mentions" v={f.pm_mentions} />
             <Row k="Private-markets terms" v={f.pm_terms_found} />
             <Row k="Alt platforms / managers" v={f.alt_platforms_named} />
+            <Row k="Primary custodian" v={f.primary_custodian} />
+            <Row k="Custodians named" v={f.custodians_named} />
             <Row k="Accredited / QP mentions" v={f.accredited_qp_mentions} />
             <Row k="Mentions USVC" v={f.mentions_usvc} />
           </dl>

@@ -64,6 +64,35 @@ PLATFORMS = {
     "Juniper Square": r"juniper\s+square",
     "USVC": r"\busvc\b",
 }
+CUSTODIANS = {
+    "Schwab": r"\bschwab\b|td\s+ameritrade",  # TD Ameritrade institutional merged into Schwab
+    "Fidelity": r"\bfidelity\b(?!\s+bond)|national\s+financial\s+services",
+    "Pershing": r"\bpershing\b",
+    "LPL": r"\blpl\b",
+    "Raymond James": r"raymond\s+james",
+    "Altruist": r"\baltruist\b",
+    "Interactive Brokers": r"interactive\s+brokers",
+    "Apex Clearing": r"apex\s+(?:clearing|fintech)",
+    "StoneX": r"\bstonex\b",
+    "Goldman Sachs Custody": r"goldman\s+sachs\s+(?:custody|advisor\s+solutions)",
+    "SEI Private Trust": r"sei\s+private\s+trust",
+    "Axos": r"\baxos\b",
+    "Northern Trust": r"northern\s+trust",
+    "BNY Mellon": r"bny\s+mellon|bank\s+of\s+new\s+york\s+mellon",
+    "State Street": r"state\s+street\s+(?:bank|corporation|custody)",
+    "U.S. Bank": r"u\.?\s?s\.?\s+bank\b",
+    "Wells Fargo": r"wells\s+fargo",
+    "J.P. Morgan": r"j\.?\s?p\.?\s+morgan|jpmorgan",
+    "Morgan Stanley": r"morgan\s+stanley",
+    "Merrill / BofA": r"\bmerrill\b|bank\s+of\s+america",
+    "UBS": r"\bubs\b",
+    # alternative-asset / self-directed custodians: can hold private funds
+    "Equity Trust": r"equity\s+trust\s+company",
+    "Millennium Trust / Inspira": r"millennium\s+trust|inspira\s+financial",
+    "Kingdom Trust": r"kingdom\s+trust",
+    "Pensco / Forge Trust": r"\bpensco\b|forge\s+trust",
+}
+ALT_CUSTODIANS = {"Equity Trust", "Millennium Trust / Inspira", "Kingdom Trust", "Pensco / Forge Trust"}
 ACCRED = r"accredited\s+investors?|qualified\s+purchasers?|qualified\s+clients?"
 EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 PHONE = re.compile(r"\(?\b\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}\b")
@@ -149,6 +178,11 @@ def analyze(crd, texts):
     r["alt_platforms_named"] = "; ".join(k for k, v in pl.items() if v)
     r["n_platforms"] = sum(1 for v in pl.values() if v)
     r["accredited_qp_mentions"] = len(re.findall(ACCRED, low))
+    cu = {k: len(re.findall(p, low)) for k, p in CUSTODIANS.items()}
+    named = sorted((k for k, v in cu.items() if v), key=lambda k: -cu[k])
+    r["custodians_named"] = "; ".join(f"{k} ({cu[k]})" for k in named)
+    core = [k for k in named if k not in ALT_CUSTODIANS and cu[k] >= 2]
+    r["primary_custodian"] = core[0] if core else ""
     r["mentions_usvc"] = bool(pl["USVC"])
     vc_any = "|".join(VC_PATTERNS.values())
     vc_sents = sentences_with(t, vc_any, 200)

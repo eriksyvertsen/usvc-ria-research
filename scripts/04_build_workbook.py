@@ -40,6 +40,8 @@ cols = {
     "vc_mentions": "Venture: Total Mentions",
     "pm_mentions": "Private Mkts/Alts Mentions",
     "alt_platforms_named": "Alt Platforms / Managers Named",
+    "primary_custodian": "Primary Custodian",
+    "custodians_named": "Custodians Named (mentions)",
     "vc_terms_found": "Venture Terms Found",
     "pm_terms_found": "Private Mkts Terms Found",
     "vc_evidence": "Venture Evidence (brochure excerpts)",
@@ -119,7 +121,7 @@ wb = load_workbook(OUT)
 widths = {"Firm": 38, "Venture Evidence (brochure excerpts)": 80, "Private Mkts Evidence (brochure excerpts)": 60,
           "Principals / Execs (from brochure)": 34, "Named Emails (from brochure)": 34, "Firm Inbox Emails": 30,
           "Website": 30, "Venture Terms Found": 40, "Private Mkts Terms Found": 40, "Brochures Reviewed": 40,
-          "Alt Platforms / Managers Named": 30, "Address": 34, "IAPD Profile": 22, "Brochure PDF": 22,
+          "Alt Platforms / Managers Named": 30, "Primary Custodian": 18, "Custodians Named (mentions)": 40, "Address": 34, "IAPD Profile": 22, "Brochure PDF": 22,
           "Venture Fit Tier": 24, "CCO (from brochure)": 24}
 fmt = {"Reg. AUM ($M)": "#,##0", "Avg Account ($K)": "#,##0", "Accounts": "#,##0", "HNW % of AUM": "0%",
        "Indiv+HNW % of AUM": "0%", "Employees": "#,##0", "Advisory Staff": "#,##0"}

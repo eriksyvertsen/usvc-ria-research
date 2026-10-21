@@ -15,6 +15,8 @@ export default function Explorer({ firms, run }: { firms: FirmRow[]; run: Run | 
   const [minAum, setMinAum] = useState(0);
   const [minScore, setMinScore] = useState(0);
   const [platform, setPlatform] = useState("");
+  const [custodian, setCustodian] = useState("");
+  const [custodianMode, setCustodianMode] = useState<"primary" | "any">("primary");
   const [hasContact, setHasContact] = useState(false);
   const [noBD, setNoBD] = useState(false);
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: "lead_score", dir: -1 });
@@ -24,6 +26,14 @@ export default function Explorer({ firms, run }: { firms: FirmRow[]; run: Run | 
   const platforms = useMemo(() => {
     const c = new Map<string, number>();
     firms.forEach((f) => f.alt_platforms_named?.split("; ").forEach((p) => p && c.set(p, (c.get(p) ?? 0) + 1)));
+    return [...c.entries()].sort((a, b) => b[1] - a[1]);
+  }, [firms]);
+
+  const custodianNames = (f: FirmRow) =>
+    (f.custodians_named ?? "").split("; ").filter(Boolean).map((c) => c.replace(/ \(\d+\)$/, ""));
+  const custodians = useMemo(() => {
+    const c = new Map<string, number>();
+    firms.forEach((f) => custodianNames(f).forEach((n) => c.set(n, (c.get(n) ?? 0) + 1)));
     return [...c.entries()].sort((a, b) => b[1] - a[1]);
   }, [firms]);
 
@@ -48,6 +58,7 @@ export default function Explorer({ firms, run }: { firms: FirmRow[]; run: Run | 
       if ((f.raum ?? 0) < minAum * 1e6) return false;
       if ((f.lead_score ?? 0) < minScore) return false;
       if (platform && !(f.alt_platforms_named ?? "").split("; ").includes(platform)) return false;
+      if (custodian && (custodianMode === "primary" ? f.primary_custodian !== custodian : !custodianNames(f).includes(custodian))) return false;
       if (hasContact && !(f.cco_name || f.contact_emails || f.principals)) return false;
       if (noBD && f.is_broker_dealer_affiliated) return false;
       if (needle) {
@@ -63,7 +74,13 @@ export default function Explorer({ firms, run }: { firms: FirmRow[]; run: Run | 
       return (x < y ? -1 : x > y ? 1 : 0) * dir;
     });
     return rows;
-  }, [firms, q, tiers, state, minAum, minScore, platform, hasContact, noBD, sort]);
+  }, [firms, q, tiers, state, minAum, minScore, platform, custodian, custodianMode, hasContact, noBD, sort]);
+
+  const topCustodians = useMemo(() => {
+    const c = new Map<string, number>();
+    filtered.forEach((f) => f.primary_custodian && c.set(f.primary_custodian, (c.get(f.primary_custodian) ?? 0) + 1));
+    return [...c.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
+  }, [filtered]);
 
   const topStates = useMemo(() => {
     const c = new Map<string, number>();
@@ -77,6 +94,7 @@ export default function Explorer({ firms, run }: { firms: FirmRow[]; run: Run | 
   const pageRows = filtered.slice(page * PAGE, page * PAGE + PAGE);
   const maxTier = Math.max(...tierCounts.map(([, v]) => v.n), 1);
   const maxState = Math.max(...topStates.map(([, n]) => n), 1);
+  const maxCust = Math.max(...topCustodians.map(([, n]) => n), 1);
 
   const toggleTier = (t: string) => {
     const n = new Set(tiers);
@@ -90,7 +108,8 @@ export default function Explorer({ firms, run }: { firms: FirmRow[]; run: Run | 
   function exportCsv() {
     const cols: (keyof FirmRow)[] = ["crd", "firm_name", "tier", "lead_score", "city", "state", "raum", "hnw_share",
       "avg_account", "main_phone", "website", "cco_name", "principals", "contact_emails", "generic_emails",
-      "vc_active_mentions", "vc_mentions", "pm_mentions", "alt_platforms_named", "is_broker_dealer_affiliated"];
+      "vc_active_mentions", "vc_mentions", "pm_mentions", "alt_platforms_named", "primary_custodian", "custodians_named",
+      "is_broker_dealer_affiliated"];
     const esc = (v: unknown) => (v == null ? "" : `"${String(v).replace(/"/g, '""')}"`);
     const csv = [cols.join(","), ...filtered.map((f) => cols.map((c) => esc(f[c])).join(","))].join("\n");
     const a = document.createElement("a");
@@ -156,6 +175,19 @@ export default function Explorer({ firms, run }: { firms: FirmRow[]; run: Run | 
             </div>
           ))}
         </div>
+        <div className="panel">
+          <h2>Primary custodian in view (click to filter)</h2>
+          {topCustodians.map(([c, n]) => (
+            <div className="bar-row" key={c}>
+              <button onClick={() => { setCustodianMode("primary"); setCustodian(custodian === c ? "" : c); setPage(0); }}
+                style={{ opacity: !custodian || custodian === c ? 1 : 0.5 }}>{c}</button>
+              <div className="bar-track">
+                <div className="bar" style={{ width: `${(100 * n) / maxCust}%`, background: "var(--tier-b)" }} />
+              </div>
+              <span className="num right">{n.toLocaleString()}</span>
+            </div>
+          ))}
+        </div>
       </section>
 
       <section className="filters">
@@ -187,6 +219,16 @@ export default function Explorer({ firms, run }: { firms: FirmRow[]; run: Run | 
           <option value="">Any alt platform</option>
           {platforms.map(([p, n]) => <option key={p} value={p}>{p} ({n})</option>)}
         </select>
+        <select value={custodian} onChange={(e) => { setCustodian(e.target.value); setPage(0); }}>
+          <option value="">Any custodian</option>
+          {custodians.map(([c, n]) => <option key={c} value={c}>{c} ({n})</option>)}
+        </select>
+        {custodian && (
+          <select value={custodianMode} onChange={(e) => { setCustodianMode(e.target.value as "primary" | "any"); setPage(0); }}>
+            <option value="primary">as primary</option>
+            <option value="any">mentioned anywhere</option>
+          </select>
+        )}
         <label><input type="checkbox" checked={hasContact} onChange={(e) => { setHasContact(e.target.checked); setPage(0); }} /> Has named contact</label>
         <label><input type="checkbox" checked={noBD} onChange={(e) => { setNoBD(e.target.checked); setPage(0); }} /> Exclude BD-affiliated</label>
         <button className="btn" onClick={exportCsv}>Export CSV</button>
@@ -206,6 +248,7 @@ export default function Explorer({ firms, run }: { firms: FirmRow[]; run: Run | 
               <th onClick={() => sortBy("vc_mentions")} className="right">VC refs{arrow("vc_mentions")}</th>
               <th onClick={() => sortBy("pm_mentions")} className="right">Alts refs{arrow("pm_mentions")}</th>
               <th>Platforms</th>
+              <th>Custodian</th>
               <th>Contact</th>
               <th>Phone</th>
             </tr>
@@ -230,6 +273,7 @@ export default function Explorer({ firms, run }: { firms: FirmRow[]; run: Run | 
                   <td className="right num">{f.vc_active_mentions}/{f.vc_mentions}</td>
                   <td className="right num">{f.pm_mentions}</td>
                   <td className="wrap-cell">{f.alt_platforms_named?.split("; ").map((p) => <span className="chip" key={p}>{p}</span>)}</td>
+                  <td>{f.primary_custodian ?? <span className="muted">—</span>}</td>
                   <td className="wrap-cell">
                     {f.cco_name && <div>{f.cco_name} <span className="muted">(CCO)</span></div>}
                     {f.contact_emails && <div><a href={`mailto:${f.contact_emails.split("; ")[0]}`}>{f.contact_emails.split("; ")[0]}</a></div>}

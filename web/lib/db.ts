@@ -17,7 +17,7 @@ export const LIST_COLS = [
   "crd", "firm_name", "city", "state", "raum", "hnw_share", "hnw_indiv_share", "avg_account", "accounts",
   "employees", "main_phone", "website", "cco_name", "contact_emails", "generic_emails", "tier", "lead_score",
   "vc_mentions", "vc_active_mentions", "pm_mentions", "alt_platforms_named", "is_broker_dealer_affiliated",
-  "disciplinary_disclosure", "mentions_usvc", "principals",
+  "disciplinary_disclosure", "mentions_usvc", "principals", "primary_custodian", "custodians_named",
 ] as const;
 
 export type FirmRow = {
@@ -27,7 +27,7 @@ export type FirmRow = {
   contact_emails: string | null; generic_emails: string | null; tier: string | null; lead_score: number | null;
   vc_mentions: number; vc_active_mentions: number; pm_mentions: number; alt_platforms_named: string | null;
   is_broker_dealer_affiliated: boolean | null; disciplinary_disclosure: boolean | null; mentions_usvc: boolean | null;
-  principals: string | null;
+  principals: string | null; primary_custodian: string | null; custodians_named: string | null;
 };
 
 export type Run = {
